@@ -1,0 +1,109 @@
+function get_url_param(name) {
+	var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+	var r = window.location.search.substr(1).match(reg);
+	if (r != null) return unescape(r[2]);
+	return null;
+}
+
+function init_offer() {
+	var k = get_url_param("k");
+	if (k == null) {
+		alert("url is null");
+		return
+	} 
+
+	var fbclid = get_url_param("fbclid");
+	var ttclid = get_url_param("ttclid");
+	var bbg = get_url_param("bbg");
+	
+	var param = {"at":"get_offer", "key":k};
+	if (fbclid != null) {
+		param.fbclid = fbclid;	
+	}
+	if (ttclid != null) {
+		param.ttclid = fbclid;	
+	}
+	if (bbg != null) {
+		param.bbg = bbg;	
+	}
+	var sub_af = get_url_param("sub_af");
+	if (sub_af != null) {
+		param.sub_af = sub_af;	
+	}
+	
+	var adset_name = get_url_param("adset_name");
+	if (adset_name != null) {
+		param.adset_name = adset_name;	
+	}
+	
+    $.ajax({
+        type: "GET",
+        url: "/sp/offer",
+        dataType: "json",
+        data: param,
+        async: false,
+        success: function(res) {
+			if (res.return_code == 0) {			
+				window.location.href = res.url;	
+			} else {
+				alert("sys err!")
+				return;
+			}
+        }
+    });
+	
+    return;
+}
+
+function init_fb_pixel(pixel) {
+    !function(f, b, e, v, n, t, s) {
+        if (f.fbq) return;
+        n = f.fbq = function() {
+            n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+        };
+        if (!f._fbq) f._fbq = n;
+        n.push = n;
+        n.loaded = !0;
+        n.version = '2.0';
+        n.queue = [];
+        t = b.createElement(e);
+        t.async = !0;
+        t.src = v;
+        s = b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t, s)
+    }(window,
+        document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', pixel); // Insert your pixel ID here.
+	fbq('track', 'PageView');
+    var fb_img = '<noscript><img height="1" width="1" style="display:none"src="https://www.facebook.com/tr?id=' + pixel + '&ev=PageView&noscript=1"/></noscript>';
+    $("head").append(fb_img);		
+}
+
+function get_fb_pixel()
+{
+	var k = get_url_param("k");
+	var fb_pixel="";
+	var param={"at":"get_pixel", "key":k};	
+    $.ajax({
+        type: "GET",
+        url: "/sp/offer",
+        dataType: "json",
+        data: param,
+        async: false,
+        success: function(r_data) {
+            if (r_data["return_code"] == 0) {
+				fb_pixel = r_data["fb_pixel"];		
+			}
+        }
+    });
+	
+	return fb_pixel;	
+}
+
+$(function(){
+	pixel = get_fb_pixel();	
+	init_fb_pixel(pixel);
+	fbq('track', 'ViewContent');
+});
+
